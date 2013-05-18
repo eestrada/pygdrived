@@ -1,0 +1,8 @@
+#!/usr/bin/python3
+
+if __name__ == '__main__':
+    import gdrive
+    import sys
+    retval = gdrive.main(sys.argv)
+    print(retval)
+
