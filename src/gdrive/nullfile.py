@@ -1,3 +1,5 @@
+from __future__ import division, with_statement, print_function, unicode_literals
+
 import io as _io
 
 class NullTextFile(_io.TextIOBase):
