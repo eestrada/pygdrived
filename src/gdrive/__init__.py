@@ -18,9 +18,8 @@ from apiclient.discovery import build
 from apiclient.http import MediaFileUpload
 
 if sys.version_info[0] == 2:
-    _old_str = str
+    bytes = str
     str = unicode
-    bytes = _old_str
 
 # Copy your credentials from the APIs Console
 CLIENT_ID = '410135413619-5tqvtk7rucqtcpp7sn9fec98vkptqk4p.apps.googleusercontent.com'
