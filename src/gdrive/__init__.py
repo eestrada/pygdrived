@@ -5,6 +5,7 @@ import sys
 import os
 import io
 import pwd
+import getopt
 import webbrowser
 import mimetypes
 import json
@@ -19,6 +20,8 @@ from oauth2client.client import FlowExchangeError
 from oauth2client.client import Credentials
 from apiclient.discovery import build
 from apiclient.http import MediaFileUpload
+
+import iohelper
 
 if sys.version_info[0] == 2:
     bytes = str
@@ -126,7 +129,7 @@ def get_config():
 
         config.add_section('gdrive')
 
-        with io.open(CONFIG_PATH, 'wb') as fp:
+        with iohelper.UnicodeIOWrapper(CONFIG_PATH, 'w') as fp:
             config.write(fp)
     else:
         config = ConfigParser.SafeConfigParser()
@@ -155,6 +158,14 @@ def get_credentials():
             oauth_creds = Credentials.new_from_json(fp.read())
 
     return oauth_creds
+
+def parse_args(argv):
+    optlist, args = getopt.getopt(argv[1:], 'hvl:srk',
+        ['help', 'verbose','log=', 'start', 'restart', 'kill', 'stop'])
+    pass
+
+def run_kwargs(kwargs):
+    pass
 
 def main(args):
     try:
