@@ -1,26 +1,36 @@
 #!/usr/bin/env python
+from __future__ import division, with_statement, print_function, unicode_literals
 
 import sys, time
-from daemon import Daemon
+from datetime import datetime
+from gdrive.daemon import DaemonBase
 
-class MyDaemon(Daemon):
-	def run(self):
-		while True:
-			time.sleep(1)
+class MyDaemon(DaemonBase):
+    def run(self):
+        while True:
+            time.sleep(self.sleep)
+            sys.stdout.write("Running my daemon at: ")
+            sys.stdout.write(datetime.now().isoformat())
+            sys.stdout.write("\n")
+            sys.stdout.flush()
 
+def usage(prog):
+    print("usage: %s status|start|stop|restart" % prog)
+    
 if __name__ == "__main__":
-	daemon = MyDaemon('/tmp/daemon-example.pid')
-	if len(sys.argv) == 2:
-		if 'start' == sys.argv[1]:
-			daemon.start()
-		elif 'stop' == sys.argv[1]:
-			daemon.stop()
-		elif 'restart' == sys.argv[1]:
-			daemon.restart()
-		else:
-			print "Unknown command"
-			sys.exit(2)
-		sys.exit(0)
-	else:
-		print "usage: %s start|stop|restart" % sys.argv[0]
-		sys.exit(2)
+    d = MyDaemon('/tmp/daemon-example.pid', sleep=10.0, stdout='/tmp/daemon_tests.log')
+    md = {'status': d.stop, 'start': d.start, 'stop': d.stop, 'restart': d.restart}
+
+    if len(sys.argv) == 2:
+        try:
+            md[sys.argv[1]]()
+        except KeyError as e:
+            print("Unknown command: " + sys.argv[1])
+            usage(sys.argv[0])
+            sys.exit(2)
+        else:
+            sys.exit(0)
+    else:
+        usage(sys.argv[0])
+        sys.exit(2)
+        
