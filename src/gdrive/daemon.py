@@ -72,6 +72,8 @@ class DaemonBase(object):
     
     def delpid(self):
         os.remove(self.pidfile)
+        sys.stdout.flush()
+        sys.stderr.flush()
 
     def start(self):
         """
