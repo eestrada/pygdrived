@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 from __future__ import division, with_statement, print_function, unicode_literals
 
-import sys, os, time, atexit
+import sys
+import os
+import io
+import time
+import atexit
+import errno
 import abc
-from abc import abstractmethod
-from signal import SIGTERM 
+import signal
 
 class DaemonBase(object):
     """
@@ -33,7 +37,7 @@ class DaemonBase(object):
         # do first fork
         try: 
             pid = os.fork() 
-        except OSError, e: 
+        except OSError as e: 
             sys.stderr.write("fork #1 failed: %d (%s)\n" % (e.errno, e.strerror))
             sys.exit(1)
         else:
@@ -48,7 +52,7 @@ class DaemonBase(object):
         # do second fork
         try: 
             pid = os.fork() 
-        except OSError, e: 
+        except OSError as e: 
             sys.stderr.write("fork #2 failed: %d (%s)\n" % (e.errno, e.strerror))
             sys.exit(1) 
         else:
@@ -58,20 +62,23 @@ class DaemonBase(object):
         # redirect standard file descriptors
         sys.stdout.flush()
         sys.stderr.flush()
-        si = file(self.stdin, 'r')
-        so = file(self.stdout, 'a+')
-        se = file(self.stderr, 'a+', 0)
-        os.dup2(si.fileno(), sys.stdin.fileno())
-        os.dup2(so.fileno(), sys.stdout.fileno())
-        os.dup2(se.fileno(), sys.stderr.fileno())
+        with io.open(self.stdin, 'rb') as si, io.open(self.stdout, 'a+b') as so, io.open(self.stderr, 'a+b', 0) as se:
+            os.dup2(si.fileno(), sys.stdin.fileno())
+            os.dup2(so.fileno(), sys.stdout.fileno())
+            os.dup2(se.fileno(), sys.stderr.fileno())
     
         # write pidfile
         atexit.register(self.delpid)
         pid = str(os.getpid())
-        file(self.pidfile,'w+').write("%s\n" % pid)
+        with io.open(self.pidfile,'w+') as pf:
+            pf.write("%s\n" % pid)
     
     def delpid(self):
-        os.remove(self.pidfile)
+        """
+        Clean up function to run at exit.
+        """
+        try: os.remove(self.pidfile)
+        except OSError: pass
         sys.stdout.flush()
         sys.stderr.flush()
 
@@ -81,13 +88,12 @@ class DaemonBase(object):
         """
         # Check for a pidfile to see if the daemon already runs
         try:
-            pf = file(self.pidfile,'r')
-            pid = int(pf.read().strip())
-            pf.close()
+            with io.open(self.pidfile,'r') as pf:
+                pid = int(pf.read().strip())
         except IOError:
             pid = None
     
-        if pid:
+        if pid is not None:
             message = "pidfile %s already exist. Daemon already running?\n"
             sys.stderr.write(message % self.pidfile)
             sys.exit(1)
@@ -105,29 +111,27 @@ class DaemonBase(object):
         sys.stderr.flush()
         # Get the pid from the pidfile
         try:
-            pf = file(self.pidfile,'r')
-            pid = int(pf.read().strip())
-            pf.close()
+            with io.open(self.pidfile,'r') as pf:
+                pid = int(pf.read().strip())
         except IOError:
             pid = None
     
-        if not pid:
+        if pid is None:
             message = "pidfile %s does not exist. Daemon not running?\n"
             sys.stderr.write(message % self.pidfile)
             return # not an error in a restart
 
         # Try killing the daemon process    
         try:
-            while 1:
-                os.kill(pid, SIGTERM)
+            while True:
+                os.kill(pid, signal.SIGTERM)
                 time.sleep(0.1)
-        except OSError, err:
-            err = str(err)
-            if err.find("No such process") > 0:
-                if os.path.exists(self.pidfile):
-                    os.remove(self.pidfile)
+        except OSError as e:
+            if e.errno == errno.ESRCH: # Error number for "No such process"
+                try: os.remove(self.pidfile)
+                except OSError: pass
             else:
-                sys.stderr.write(str(err))
+                sys.stderr.write(str(e.strerror))
                 sys.exit(1)
 
     def restart(self):
@@ -137,7 +141,7 @@ class DaemonBase(object):
         self.stop()
         self.start()
 
-    @abstractmethod
+    @abc.abstractmethod
     def run(self):
         """
         You must override this method when you subclass Daemon. It will be called
