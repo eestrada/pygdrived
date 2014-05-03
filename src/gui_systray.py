@@ -7,14 +7,39 @@ from future_builtins import *
 import sys, time
 
 try:
-    from PySide import QtGui
+    import threading
+except ImportError:
+    import dummy_threading as threading
+
+try:
+    from PySide import QtGui, QtCore
 except ImportError:
     try:
-        from PyQt4 import QtGui
+        from PyQt4 import QtGui, QtCore
     except ImportError:
         sys.stderr.write('Unable to import GUI code. Please install PySide or PyQt.')
         QtGui = None
 
+class DaemonGui(QtGui.QSystemTrayIcon, object):
+    def __init__(self, icon, parent=None, **kwargs):
+        super(DaemonGui, self).__init__(icon, parent)
+
+        menu = self.initMenu(parent)
+        self.setContextMenu(menu)
+
+    def initMenu(self, parent):
+        menu = QtGui.QMenu(parent)
+
+        folderaction = menu.addAction('&Open Drive Folder')
+        folderaction.triggered.connect(parent.close)
+
+        prefAct = menu.addAction('&Preferences...')
+        prefAct.triggered.connect(parent.close)
+
+        exitAction = menu.addAction('&Quit Google Drive')
+        exitAction.triggered.connect(parent.close)
+
+        return menu
 
 def main(args):
     
@@ -22,19 +47,13 @@ def main(args):
 
     w = QtGui.QWidget()
 
-    ico = QtGui.QIcon('img/drive_simple_plain_svg.svg')
+    icon = QtGui.QIcon('img/drive_simple_plain_svg.svg')
 
-    sti = QtGui.QSystemTrayIcon(ico, parent=w)
+    sti = DaemonGui(icon, parent=w, app=app)
 
     sti.show()
 
-    for i in range(10):
-        app.processEvents()
-        time.sleep(0.25)
-
-    app.exit()
-    sys.exit()
-
+    return app.exec_()
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
