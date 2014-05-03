@@ -17,10 +17,10 @@ except ImportError:
     try:
         from PyQt4 import QtGui, QtCore
     except ImportError:
-        sys.stderr.write('Unable to import GUI code. Please install PySide or PyQt.')
+        sys.stderr.write('Unable to import GUI code. Please install PySide or PyQt.\n')
         QtGui = None
 
-class DaemonGui(QtGui.QSystemTrayIcon, object):
+class DaemonGui(QtGui.QSystemTrayIcon):
     def __init__(self, icon, parent=None, **kwargs):
         super(DaemonGui, self).__init__(icon, parent)
 
@@ -50,6 +50,10 @@ def main(args):
     icon = QtGui.QIcon('img/drive_simple_plain_svg.svg')
 
     sti = DaemonGui(icon, parent=w, app=app)
+
+    mainwin = QtGui.QMainWindow(parent=w)
+
+    mainwin.show()
 
     sti.show()
 
