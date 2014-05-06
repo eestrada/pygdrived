@@ -20,40 +20,61 @@ except ImportError:
         sys.stderr.write('Unable to import GUI code. Please install PySide or PyQt.\n')
         QtGui = None
 
-class DaemonGui(QtGui.QSystemTrayIcon):
-    def __init__(self, icon, parent=None, **kwargs):
-        super(DaemonGui, self).__init__(icon, parent)
+class PrefWindow(QtGui.QMainWindow):
+    def __init__(self, **kwargs):
+        super(PrefWindow, self).__init__(**kwargs)
 
-        menu = self.initMenu(parent)
-        self.setContextMenu(menu)
+        self.initUI()
 
-    def initMenu(self, parent):
-        menu = QtGui.QMenu(parent)
+    def initUI(self):
+        self.setWindowTitle('Google Drive Preferences')
+        b = QtGui.QPushButton('Center', self)
+        b.clicked.connect(self.center)
+        b.resize(b.sizeHint())
+        b.move(50, 50)
+
+    def closeEvent(self, event):
+        event.ignore()
+        self.hide()
+
+    def center(self):
+        qr = self.frameGeometry()
+        cp = QtGui.QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
+
+class DaemonGui(QtGui.QWidget):
+    def __init__(self, icon, *args, **kwargs):
+        super(DaemonGui, self).__init__()
+        self.tico = QtGui.QSystemTrayIcon(icon, parent=self)
+        self.pwin = PrefWindow(parent=self)
+        menu = self.initMenu()
+        self.tico.setContextMenu(menu)
+
+    def initMenu(self):
+        menu = QtGui.QMenu(self)
 
         folderaction = menu.addAction('&Open Drive Folder')
-        folderaction.triggered.connect(parent.close)
+        folderaction.triggered.connect(self.close)
 
         prefAct = menu.addAction('&Preferences...')
-        prefAct.triggered.connect(parent.close)
+        prefAct.triggered.connect(self.pwin.show)
 
         exitAction = menu.addAction('&Quit Google Drive')
-        exitAction.triggered.connect(parent.close)
+        exitAction.triggered.connect(self.close)
 
         return menu
+
+    def show(self):
+        self.tico.show()
 
 def main(args):
     
     app = QtGui.QApplication(args)
 
-    w = QtGui.QWidget()
-
     icon = QtGui.QIcon('img/drive_simple_plain_svg.svg')
 
-    sti = DaemonGui(icon, parent=w, app=app)
-
-    mainwin = QtGui.QMainWindow(parent=w)
-
-    mainwin.show()
+    sti = DaemonGui(icon)
 
     sti.show()
 
@@ -61,3 +82,4 @@ def main(args):
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv))
+
