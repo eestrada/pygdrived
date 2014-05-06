@@ -176,8 +176,8 @@ def main(args):
         #jc = credentials.to_json()
         #po = json.loads(jc)
         #print(json.dumps(po, indent=4))
-    except SystemExit as e:
-        raise
+    except Exception as e:
+        return 1
     else:
-        raise SystemExit(0)
+        return 0
 
