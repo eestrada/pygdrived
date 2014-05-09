@@ -1,9 +1,9 @@
 pygdrived
 =========
 
-A Google Drive daemon written in Python for Unix and Unix work-alikes (e.g. Linux, etc.). It is licensed under terms of the Apache License, Version 2.0. See LICENSE.txt for details.
+A Google Drive daemon written in Python for Unix and Unix work-alikes (e.g. Linux, FreeBSD, etc.). It is licensed under terms of the Apache License, Version 2.0. See LICENSE.txt for details.
 
-TODO: Add LICENSE file.
+ This could also theoretically work for Mac OS X, but there would be little point in using it since offical Google Drive software already exists from Google.
 
 TODO: Auto handshake (don't require user to copy/paste code).
 
@@ -13,7 +13,7 @@ TODO: Save initial setup authorization in ~/.config/pygdrived directory.
 
 TODO: Implement as daemon.
 
-TODO: Package required google packages in an .egg file for distribution.
+TODO: Package required google packages in an .egg file for easier distribution and installation.
 
 TODO: Maybe build a simple Tk of Qt GUI for configuration purposes?
 

@@ -18,14 +18,26 @@ class DaemonBase(object):
     
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, pidfile, sleep=1.0, stdin=os.devnull,
-                stdout=os.devnull, stderr=os.devnull):
+    def __init__(self, pidfile, sleep=1.0, target=None, args=(), kwargs={},
+                stdin=os.devnull, stdout=os.devnull, stderr=os.devnull, **dangling_kwargs):
+        """
+        The parameters, target, args and kwargs are the function that will be called
+        by the run method before each sleep period.
+        """
+
+        if pidfile is None:
+            raise ValueError('pidfile parameter cannot be None.')
+
+        self.pidfile = pidfile
+        self.sleep = sleep
+
+        self.target = target
+        self.args = args
+        self.kwargs = kwargs
 
         self.stdin = stdin
         self.stdout = stdout
         self.stderr = stderr
-        self.pidfile = pidfile
-        self.sleep = sleep
     
     def daemonize(self):
         """
@@ -144,9 +156,12 @@ class DaemonBase(object):
     @abc.abstractmethod
     def run(self):
         """
-        You must override this method when you subclass Daemon. It will be called
-        after the process has been daemonized by start() or restart().
+        This method will be called after the process has been daemonized by start() or restart().
         """
         while True:
+            if self.target is not None:
+                args = self.args
+                kwargs = self.kwargs
+                self.target(*args, **kwargs)
             time.sleep(self.sleep)
 
